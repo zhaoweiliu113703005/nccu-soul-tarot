@@ -1,0 +1,1146 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<meta name="theme-color" content="#0b0718">
+<title>政大靈魂塔羅</title>
+<meta name="description" content="12 題心理測驗＋塔羅抽牌，找出最適合你的政大建築物或周邊餐廳。">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@500;700&family=Noto+Serif+TC:wght@400;600;900&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --night: #0b0718;
+    --night-2: #1a1036;
+    --violet: #2a1d52;
+    --gold: #d9b765;
+    --gold-soft: rgba(217, 183, 101, .35);
+    --gold-faint: rgba(217, 183, 101, .12);
+    --ink: #ece4ff;
+    --muted: #a99fc6;
+    --parchment: #f2e6c6;
+    --parchment-2: #dcc58e;
+    --card-ink: #2b1d45;
+    --serif: "Noto Serif TC", "Songti TC", "PMingLiU", "MingLiU", serif;
+    --display: "Cinzel", "Times New Roman", serif;
+  }
+  * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+  html { background: var(--night); overflow-x: hidden; }
+  body {
+    margin: 0;
+    min-height: 100vh;
+    min-height: 100dvh;
+    color: var(--ink);
+    font-family: var(--serif);
+    line-height: 1.75;
+    background:
+      radial-gradient(ellipse 80% 60% at 50% 0%, #2b1958 0%, transparent 70%),
+      radial-gradient(ellipse 60% 50% at 100% 100%, #1d1240 0%, transparent 70%),
+      var(--night);
+    background-attachment: fixed;
+    overflow-x: hidden;
+    padding: max(24px, env(safe-area-inset-top)) 16px max(40px, env(safe-area-inset-bottom));
+  }
+  button { font-family: inherit; touch-action: manipulation; }
+
+  /* ---------- 星空 ---------- */
+  #sky { position: fixed; inset: 0; pointer-events: none; z-index: 0; overflow: hidden; }
+  .star {
+    position: absolute; border-radius: 50%; background: #fff;
+    animation: twinkle var(--d) ease-in-out infinite; animation-delay: var(--delay);
+  }
+  @keyframes twinkle { 0%, 100% { opacity: .15; } 50% { opacity: .9; } }
+
+  .app { position: relative; z-index: 1; width: 100%; max-width: 980px; margin: 0 auto; }
+  .stage { animation: appear .6s ease both; max-width: 640px; margin: 0 auto; }
+  .stage.wide { max-width: 960px; }
+  @keyframes appear { from { opacity: 0; transform: translateY(14px); } to { opacity: 1; transform: none; } }
+  .hidden { display: none !important; }
+
+  /* ---------- 共用：面板與按鈕 ---------- */
+  .panel {
+    position: relative;
+    background: linear-gradient(180deg, rgba(42, 29, 82, .72), rgba(18, 11, 43, .82));
+    border: 1px solid var(--gold-soft);
+    border-radius: 18px;
+    padding: 28px 22px;
+    box-shadow: 0 20px 60px rgba(0, 0, 0, .45), inset 0 0 0 4px rgba(11, 7, 24, .5), inset 0 0 0 5px var(--gold-faint);
+    -webkit-backdrop-filter: blur(4px);
+    backdrop-filter: blur(4px);
+  }
+  .panel::before, .panel::after {
+    content: "✦"; position: absolute; color: var(--gold); font-size: 14px; line-height: 1;
+  }
+  .panel::before { top: 10px; left: 12px; }
+  .panel::after { bottom: 10px; right: 12px; }
+
+  .ornament { text-align: center; color: var(--gold); letter-spacing: .6em; font-size: 14px; margin: 0 0 6px; padding-left: .6em; }
+  .eyebrow { font-family: var(--display); letter-spacing: .3em; color: var(--gold); font-size: 13px; text-align: center; margin: 0; padding-left: .3em; }
+  h1 {
+    font-size: clamp(30px, 7.5vw, 46px);
+    font-weight: 900;
+    text-align: center;
+    margin: 4px 0 8px;
+    line-height: 1.25;
+    background: linear-gradient(180deg, #fff3cf, var(--gold) 70%, #a8853a);
+    -webkit-background-clip: text; background-clip: text; color: transparent;
+    text-shadow: 0 0 30px rgba(217, 183, 101, .25);
+  }
+  .lead { text-align: center; color: var(--muted); margin: 0 0 26px; font-size: 15px; }
+
+  .btn {
+    display: inline-flex; align-items: center; justify-content: center; gap: 8px;
+    min-height: 52px; padding: 12px 26px;
+    border-radius: 999px; border: 1px solid var(--gold);
+    background: linear-gradient(180deg, #e8cb82, #b8913f);
+    color: #1d1233; font-size: 17px; font-weight: 700; letter-spacing: .1em;
+    cursor: pointer;
+    box-shadow: 0 0 24px rgba(217, 183, 101, .25);
+    transition: transform .15s, box-shadow .25s, opacity .25s;
+  }
+  .btn:active { transform: scale(.97); }
+  .btn:disabled { opacity: .35; cursor: not-allowed; box-shadow: none; }
+  .btn.ghost { background: transparent; color: var(--gold); box-shadow: none; }
+  .btn.block { width: 100%; }
+  @media (hover: hover) {
+    .btn:not(:disabled):hover { box-shadow: 0 0 36px rgba(217, 183, 101, .5); }
+    .btn.ghost:hover { background: var(--gold-faint); }
+  }
+  .note { font-size: 12px; color: var(--muted); text-align: center; margin: 18px 0 0; }
+
+  /* ---------- 塔羅牌（共用） ---------- */
+  .tarot {
+    --w: 120px;
+    width: var(--w);
+    height: calc(var(--w) * 12 / 7);
+    border-radius: calc(var(--w) * .07);
+    position: relative;
+    user-select: none; -webkit-user-select: none;
+  }
+  .card-back, .card-front {
+    position: absolute; inset: 0;
+    border-radius: inherit;
+    -webkit-backface-visibility: hidden; backface-visibility: hidden;
+    overflow: hidden;
+  }
+  .card-back {
+    background:
+      radial-gradient(circle at 50% 50%, rgba(217, 183, 101, .22) 0 16%, transparent 16.5%),
+      radial-gradient(circle at 50% 50%, transparent 0 24%, rgba(217, 183, 101, .35) 24.5% 25.5%, transparent 26%),
+      repeating-linear-gradient(45deg, rgba(217, 183, 101, .10) 0 1.5px, transparent 1.5px 11px),
+      repeating-linear-gradient(-45deg, rgba(217, 183, 101, .10) 0 1.5px, transparent 1.5px 11px),
+      linear-gradient(160deg, #33236a, #140c30);
+    border: 1.5px solid var(--gold);
+    box-shadow: inset 0 0 0 calc(var(--w) * .04) #150d31, inset 0 0 0 calc(var(--w) * .04 + 1px) var(--gold-soft), 0 10px 28px rgba(0, 0, 0, .55);
+    display: grid; place-items: center;
+  }
+  .card-back::after {
+    content: "☾✦☽";
+    color: var(--gold);
+    font-size: calc(var(--w) * .16);
+    letter-spacing: .05em;
+    text-shadow: 0 0 12px rgba(217, 183, 101, .6);
+  }
+  .card-back .sym { position: relative; z-index: 1; font-size: calc(var(--w) * .3); filter: drop-shadow(0 0 10px rgba(217, 183, 101, .5)); }
+  .card-back:has(.sym)::after { content: none; }
+
+  .card-front {
+    transform: rotateY(180deg);
+    background:
+      radial-gradient(circle at 50% 42%, rgba(255, 255, 255, .55), transparent 55%),
+      linear-gradient(170deg, var(--parchment), var(--parchment-2));
+    color: var(--card-ink);
+    border: 1.5px solid #9c7a33;
+    box-shadow: inset 0 0 0 calc(var(--w) * .035) var(--parchment), inset 0 0 0 calc(var(--w) * .035 + 1.5px) #9c7a33, 0 14px 40px rgba(0, 0, 0, .55);
+    display: flex; flex-direction: column; align-items: center; justify-content: space-between;
+    padding: calc(var(--w) * .09) calc(var(--w) * .08) calc(var(--w) * .08);
+    text-align: center;
+  }
+  .cf-num { font-family: var(--display); font-weight: 700; font-size: calc(var(--w) * .085); letter-spacing: .15em; line-height: 1; }
+  .cf-art {
+    width: calc(var(--w) * .66); height: calc(var(--w) * .66);
+    border-radius: 50%;
+    display: grid; place-items: center;
+    font-size: calc(var(--w) * .3);
+    background:
+      radial-gradient(circle, #fff7e0 0 45%, transparent 46%),
+      repeating-conic-gradient(from 0deg, rgba(156, 122, 51, .55) 0 4deg, transparent 4deg 15deg);
+    border: 1.5px solid #9c7a33;
+    box-shadow: 0 0 0 calc(var(--w) * .025) var(--parchment), 0 0 0 calc(var(--w) * .025 + 1px) rgba(156, 122, 51, .6);
+  }
+  .cf-title { font-family: var(--display); font-weight: 700; font-size: calc(var(--w) * .066); letter-spacing: .08em; line-height: 1.3; }
+  .cf-zh { font-size: calc(var(--w) * .065); color: #6a5328; line-height: 1.4; margin-top: 2px; }
+  .cf-type { font-weight: 900; font-size: calc(var(--w) * .095); line-height: 1.3; margin-top: calc(var(--w) * .02); }
+
+  /* ---------- 首頁：選模式 ---------- */
+  .mode-label { text-align: center; color: var(--gold); letter-spacing: .2em; font-size: 14px; margin: 0 0 14px; padding-left: .2em; }
+  .modes { display: flex; justify-content: center; gap: clamp(16px, 6vw, 40px); margin-bottom: 28px; }
+  .mode {
+    background: none; border: none; padding: 0; cursor: pointer; color: var(--ink);
+    display: flex; flex-direction: column; align-items: center; gap: 10px;
+  }
+  .mode .tarot { --w: clamp(104px, 30vw, 140px); transition: transform .35s cubic-bezier(.2, .8, .2, 1), filter .35s; }
+  .mode .tarot .card-back { transition: box-shadow .35s; }
+  .mode .m-name { font-weight: 700; font-size: 16px; letter-spacing: .1em; }
+  .mode .m-sub { font-size: 12px; color: var(--muted); margin-top: -8px; }
+  .mode.selected .tarot { transform: translateY(-10px) rotate(-2deg); }
+  .mode.selected .card-back { box-shadow: 0 0 0 2px var(--gold), 0 0 36px rgba(217, 183, 101, .6), inset 0 0 0 calc(var(--w) * .04) #150d31; }
+  .mode.selected .m-name { color: var(--gold); }
+  .modes.has-choice .mode:not(.selected) .tarot { filter: brightness(.55) saturate(.6); }
+  @media (hover: hover) { .mode:hover .tarot { transform: translateY(-6px); } }
+
+  /* ---------- 測驗 ---------- */
+  .quiz-top { display: flex; justify-content: space-between; align-items: center; margin-bottom: 14px; }
+  .back { background: none; border: none; color: var(--muted); font-size: 15px; cursor: pointer; padding: 8px 4px; min-height: 44px; }
+  .back:disabled { visibility: hidden; }
+  .counter { font-family: var(--display); color: var(--gold); letter-spacing: .15em; font-size: 15px; }
+  .stars { display: flex; justify-content: center; gap: 6px; flex-wrap: wrap; margin-bottom: 22px; }
+  .stars span { width: 10px; height: 10px; transform: rotate(45deg); border: 1px solid var(--gold-soft); transition: background .3s, box-shadow .3s; }
+  .stars span.on { background: var(--gold); box-shadow: 0 0 10px var(--gold); }
+  .stars span.now { border-color: var(--gold); animation: pulse 1.6s ease-in-out infinite; }
+  @keyframes pulse { 50% { box-shadow: 0 0 10px var(--gold); } }
+  .q-label { text-align: center; font-family: var(--display); color: var(--gold); letter-spacing: .3em; font-size: 13px; margin: 0; padding-left: .3em; }
+  .q-title { text-align: center; font-size: clamp(20px, 5vw, 25px); line-height: 1.5; margin: 4px 0 24px; font-weight: 700; }
+  .options { display: grid; gap: 12px; }
+  .option {
+    display: flex; align-items: center; gap: 14px;
+    width: 100%; min-height: 56px; padding: 12px 18px;
+    text-align: left; font-size: 16px; line-height: 1.5;
+    color: var(--ink);
+    background: rgba(11, 7, 24, .45);
+    border: 1px solid var(--gold-soft);
+    border-radius: 12px;
+    cursor: pointer;
+    transition: background .2s, border-color .2s, transform .15s, box-shadow .2s;
+  }
+  .option .key {
+    flex: none; width: 30px; height: 30px; border-radius: 50%;
+    display: grid; place-items: center;
+    font-family: var(--display); font-weight: 700; font-size: 14px;
+    color: var(--gold); border: 1px solid var(--gold-soft);
+  }
+  .option:active { transform: scale(.98); }
+  .option.chosen { background: rgba(217, 183, 101, .18); border-color: var(--gold); box-shadow: 0 0 20px rgba(217, 183, 101, .3); }
+  .option.chosen .key { background: var(--gold); color: #1d1233; }
+  @media (hover: hover) { .option:hover { background: rgba(217, 183, 101, .1); border-color: var(--gold); } }
+  .q-anim { animation: qIn .45s ease both; }
+  @keyframes qIn { from { opacity: 0; transform: translateX(18px); } to { opacity: 1; transform: none; } }
+
+  /* ---------- 占卜中 ---------- */
+  .oracle { min-height: 70vh; display: grid; place-content: center; text-align: center; gap: 18px; }
+  .wheel {
+    width: 140px; height: 140px; margin: 0 auto; border-radius: 50%;
+    border: 1px solid var(--gold);
+    background: repeating-conic-gradient(rgba(217, 183, 101, .5) 0 2deg, transparent 2deg 30deg);
+    box-shadow: 0 0 40px rgba(217, 183, 101, .35), inset 0 0 30px rgba(217, 183, 101, .3);
+    display: grid; place-items: center;
+    animation: spin 3s linear infinite;
+  }
+  .wheel::after { content: "✦"; color: var(--gold); font-size: 36px; animation: spin 3s linear infinite reverse; }
+  @keyframes spin { to { transform: rotate(360deg); } }
+  .oracle-text { font-size: 18px; letter-spacing: .2em; color: var(--gold); margin: 0; padding-left: .2em; }
+  .oracle-sub { color: var(--muted); margin: 0; font-size: 14px; }
+
+  /* ---------- 抽牌 ---------- */
+  #draw { min-height: 80vh; min-height: 80dvh; display: flex; flex-direction: column; justify-content: center; }
+  .fan { width: 100%; }
+  .draw-head { text-align: center; margin-bottom: 8px; }
+  .draw-head h2 { font-size: clamp(22px, 5.5vw, 30px); margin: 4px 0; }
+  .draw-head p { color: var(--muted); margin: 0; font-size: 15px; }
+  .fan {
+    --fw: clamp(66px, 17vw, 120px);
+    position: relative;
+    height: calc(var(--fw) * 12 / 7 + 90px);
+    margin: 10px auto 0;
+  }
+  .fan-card {
+    position: absolute; left: 50%; bottom: 30px;
+    margin-left: calc(var(--fw) / -2);
+    transform-origin: 50% 100%;
+    transition: transform .7s cubic-bezier(.2, .8, .2, 1), opacity .5s;
+    cursor: pointer;
+    background: none; border: none; padding: 0;
+  }
+  .fan-card .tarot { --w: var(--fw); transition: transform .3s, filter .3s; }
+  .fan-card .card-back { transition: box-shadow .3s; }
+  .fan-card:focus-visible { outline: none; }
+  .fan-card:focus-visible .card-back { box-shadow: 0 0 0 2px var(--gold), 0 0 30px rgba(217, 183, 101, .6); }
+  @media (hover: hover) {
+    .fan:not(.done) .fan-card:hover .tarot { transform: translateY(-22px); }
+    .fan:not(.done) .fan-card:hover .card-back { box-shadow: 0 0 0 2px var(--gold), 0 0 30px rgba(217, 183, 101, .55); }
+  }
+  .fan-card.picked .tarot { transform: translateY(-40px) scale(1.12); }
+  .fan-card.picked .card-back { box-shadow: 0 0 0 2px var(--gold), 0 0 50px rgba(217, 183, 101, .8); }
+  .fan-card.away { opacity: 0; }
+  .draw-hint { text-align: center; color: var(--gold); font-size: 14px; letter-spacing: .15em; margin: 0; animation: breathe 2.4s ease-in-out infinite; }
+  @keyframes breathe { 50% { opacity: .35; } }
+
+  /* ---------- 揭牌結果 ---------- */
+  .reveal { display: grid; gap: 28px; align-items: start; }
+  .reveal-card { display: flex; flex-direction: column; align-items: center; gap: 14px; }
+  .flip { perspective: 1400px; }
+  .flip .tarot { --w: min(280px, 68vw); }
+  .flip-inner {
+    position: absolute; inset: 0;
+    transform-style: preserve-3d; -webkit-transform-style: preserve-3d;
+    transition: transform 1.1s cubic-bezier(.3, .7, .2, 1);
+    border-radius: inherit;
+  }
+  .flip.flipped .flip-inner { transform: rotateY(180deg); }
+  .flip.glow .card-front { animation: glow 2.4s ease-in-out infinite; }
+  @keyframes glow {
+    0%, 100% { box-shadow: inset 0 0 0 calc(var(--w) * .035) var(--parchment), inset 0 0 0 calc(var(--w) * .035 + 1.5px) #9c7a33, 0 0 30px rgba(217, 183, 101, .35); }
+    50%      { box-shadow: inset 0 0 0 calc(var(--w) * .035) var(--parchment), inset 0 0 0 calc(var(--w) * .035 + 1.5px) #9c7a33, 0 0 60px rgba(217, 183, 101, .7); }
+  }
+  .kw { color: var(--gold); font-size: 14px; letter-spacing: .1em; text-align: center; margin: 0; }
+
+  .reading { opacity: 0; transform: translateY(18px); transition: opacity .8s ease, transform .8s ease; }
+  .reading.show { opacity: 1; transform: none; }
+  .reading h2 { font-size: clamp(24px, 6vw, 32px); margin: 0 0 6px; text-align: center; }
+  .reading h2 small { display: block; font-size: 14px; color: var(--muted); font-weight: 400; letter-spacing: .2em; }
+  .r-desc { color: var(--ink); opacity: .9; margin: 0 0 22px; text-align: center; }
+  .omen {
+    border: 1px solid var(--gold);
+    border-radius: 14px;
+    padding: 20px 20px 18px;
+    background: linear-gradient(180deg, rgba(217, 183, 101, .14), rgba(217, 183, 101, .04));
+    margin-bottom: 18px;
+  }
+  .omen-label { font-size: 13px; color: var(--gold); letter-spacing: .2em; margin: 0; }
+  .omen-name { font-size: clamp(22px, 5.5vw, 27px); margin: 2px 0; line-height: 1.4; }
+  .omen-area { color: var(--muted); font-size: 14px; margin: 0 0 10px; }
+  .omen-why { margin: 0 0 10px; }
+  .omen-tip { font-size: 14px; margin: 0 0 14px; opacity: .9; }
+  .map-link {
+    display: inline-flex; align-items: center; gap: 6px; min-height: 44px;
+    color: var(--gold); font-weight: 700; text-decoration: none; border-bottom: 1px dashed var(--gold-soft);
+  }
+  .secret { border: 1px dashed var(--gold-soft); border-radius: 14px; padding: 14px 18px; margin-bottom: 22px; font-size: 15px; }
+  .secret b { color: var(--gold); }
+  .secret .s-label { display: block; font-size: 12px; color: var(--muted); letter-spacing: .2em; margin-bottom: 2px; }
+  .reading > h3 { font-size: 15px; color: var(--gold); letter-spacing: .2em; margin: 0 0 12px; font-weight: 600; }
+  .bars { display: grid; gap: 9px; margin-bottom: 26px; }
+  .bar-row { display: grid; grid-template-columns: 112px 1fr 40px; gap: 10px; align-items: center; font-size: 14px; }
+  .bar { height: 8px; border-radius: 999px; background: rgba(217, 183, 101, .12); overflow: hidden; }
+  .bar > div { height: 100%; width: 0; border-radius: 999px; background: linear-gradient(90deg, #8b6cd8, #b9a3f0); transition: width 1s ease; }
+  .bar-row.top .bar > div { background: linear-gradient(90deg, #b8913f, #f0d68e); box-shadow: 0 0 10px rgba(217, 183, 101, .6); }
+  .bar-row .pct { text-align: right; color: var(--muted); font-family: var(--display); }
+  .actions { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+  .actions .wide-btn { grid-column: 1 / -1; }
+
+  .toast {
+    position: fixed; left: 50%; bottom: max(24px, env(safe-area-inset-bottom)); transform: translateX(-50%);
+    background: var(--gold); color: #1d1233; z-index: 10;
+    padding: 10px 20px; border-radius: 999px; font-size: 14px; font-weight: 700;
+    opacity: 0; pointer-events: none; transition: opacity .25s;
+    white-space: nowrap;
+  }
+  .toast.show { opacity: 1; }
+
+  /* ---------- 響應式 ---------- */
+  @media (max-width: 420px) {
+    .panel { padding: 26px 16px; }
+    .option { padding: 12px 14px; font-size: 15.5px; }
+    .actions { grid-template-columns: 1fr; }
+    .bar-row { grid-template-columns: 100px 1fr 36px; font-size: 13px; }
+  }
+  @media (min-width: 900px) {
+    .reveal { grid-template-columns: 330px 1fr; gap: 40px; }
+    .reveal-card { position: sticky; top: 32px; }
+    .flip .tarot { --w: 300px; }
+    .reading h2, .r-desc { text-align: left; }
+  }
+  @media (prefers-reduced-motion: reduce) {
+    *, *::before, *::after { animation-duration: .01ms !important; animation-iteration-count: 1 !important; transition-duration: .01ms !important; }
+  }
+</style>
+</head>
+<body>
+<div id="sky" aria-hidden="true"></div>
+
+<main class="app" id="app">
+
+  <!-- 首頁 -->
+  <section id="home" class="stage">
+    <div class="panel">
+      <p class="ornament">✦ ☾ ✦</p>
+      <p class="eyebrow">NCCU SOUL TAROT</p>
+      <h1>政大靈魂塔羅</h1>
+      <p class="lead">回答 12 個問題，再憑直覺抽一張牌，<br>看看命運指引你前往政大的哪個角落。</p>
+
+      <p class="mode-label">— 選擇你的占卜之牌 —</p>
+      <div class="modes" id="modes">
+        <button class="mode" data-mode="building" type="button" aria-pressed="false">
+          <div class="tarot"><div class="card-back"><span class="sym">🏛️</span></div></div>
+          <span class="m-name">建築之牌</span>
+          <span class="m-sub">推薦校園建築／景點</span>
+        </button>
+        <button class="mode" data-mode="food" type="button" aria-pressed="false">
+          <div class="tarot"><div class="card-back"><span class="sym">🍜</span></div></div>
+          <span class="m-name">美食之牌</span>
+          <span class="m-sub">推薦政大周邊餐廳</span>
+        </button>
+      </div>
+
+      <button id="startBtn" class="btn block" type="button" disabled>開始占卜</button>
+      <p class="note">占卜結果僅供娛樂；店家營業資訊可能變動，出發前請再確認。</p>
+    </div>
+  </section>
+
+  <!-- 測驗 -->
+  <section id="quiz" class="stage hidden">
+    <div class="panel">
+      <div class="quiz-top">
+        <button id="backBtn" class="back" type="button">← 上一題</button>
+        <span id="counter" class="counter">I / XII</span>
+      </div>
+      <div id="stars" class="stars" aria-hidden="true"></div>
+      <div id="qBox">
+        <p id="qLabel" class="q-label"></p>
+        <h2 id="qTitle" class="q-title"></h2>
+        <div id="options" class="options"></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- 占卜中 -->
+  <section id="oracle" class="stage hidden">
+    <div class="oracle">
+      <div class="wheel"></div>
+      <p class="oracle-text">命運之輪轉動中</p>
+      <p class="oracle-sub">正在解讀你的靈魂頻率……</p>
+    </div>
+  </section>
+
+  <!-- 抽牌 -->
+  <section id="draw" class="stage hidden">
+    <div class="draw-head">
+      <p class="eyebrow">CHOOSE YOUR CARD</p>
+      <h2>憑直覺，抽一張牌</h2>
+      <p>深呼吸，在心裡默念你的名字……</p>
+    </div>
+    <div id="fan" class="fan"></div>
+    <p class="draw-hint">✦ 點選一張牌 ✦</p>
+  </section>
+
+  <!-- 揭牌 -->
+  <section id="reveal" class="stage wide hidden">
+    <div class="reveal">
+      <div class="reveal-card">
+        <div id="flip" class="flip">
+          <div class="tarot">
+            <div class="flip-inner">
+              <div class="card-back"></div>
+              <div class="card-front">
+                <div id="cfNum" class="cf-num"></div>
+                <div id="cfArt" class="cf-art"></div>
+                <div>
+                  <div id="cfTitle" class="cf-title"></div>
+                  <div id="cfZh" class="cf-zh"></div>
+                  <div id="cfType" class="cf-type"></div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+        <p id="kw" class="kw"></p>
+      </div>
+
+      <div id="reading" class="reading panel">
+        <h2><small>你抽到的是</small><span id="rType"></span></h2>
+        <p id="rDesc" class="r-desc"></p>
+
+        <div class="omen">
+          <p id="oLabel" class="omen-label"></p>
+          <h3 id="oName" class="omen-name"></h3>
+          <p id="oArea" class="omen-area"></p>
+          <p id="oWhy" class="omen-why"></p>
+          <p id="oTip" class="omen-tip"></p>
+          <a id="oMap" class="map-link" target="_blank" rel="noopener">📍 在 Google 地圖上查看</a>
+        </div>
+
+        <div id="secret" class="secret"></div>
+
+        <h3>✦ 星盤能量分布</h3>
+        <div id="bars" class="bars"></div>
+
+        <div class="actions">
+          <button id="switchBtn" class="btn" type="button"></button>
+          <button id="shareBtn" class="btn ghost" type="button">複製結果</button>
+          <button id="retryBtn" class="btn ghost wide-btn" type="button">↺ 重新占卜</button>
+        </div>
+      </div>
+    </div>
+  </section>
+
+</main>
+<div id="toast" class="toast" role="status"></div>
+
+<script>
+/* ================================================================
+   牌組資料：建築之牌、美食之牌各自有 10 張人格牌與 12 道題目
+   每個選項：主要人格 +2、次要人格 +1
+   ================================================================ */
+
+/* ---------- 🏛️ 建築之牌 ---------- */
+const BUILDING_TYPES = {
+  A: {
+    name: '好奇探險家', emoji: '🧭', num: '0', title: 'THE FOOL', zh: '愚者', kw: '新的開始・好奇・冒險',
+    desc: '你對新事物永遠充滿好奇，喜歡嘗鮮、探索沒去過的地方。對你來說，生活就是一場不斷升級的冒險。',
+    place: {
+      name: '達賢圖書館', area: '山下校區・景美溪畔',
+      why: '政大最新的圖書館，不只能讀書，還有 VR、桌遊等新奇空間，根本是為好奇心打造的遊樂場。',
+      tip: '逛完別急著走，樓下就有不少餐廳可以接著探索。',
+      map: '政治大學 達賢圖書館'
+    }
+  },
+  B: {
+    name: '安靜沉思者', emoji: '📖', num: 'IX', title: 'THE HERMIT', zh: '隱者', kw: '內省・獨處・智慧',
+    desc: '你享受獨處，喜歡在安靜的地方整理思緒。你的內心世界很豐富，只是不需要對每個人說。',
+    place: {
+      name: '中正圖書館', area: '山下校區',
+      why: '政大的老牌總圖書館，一排排書架和安靜的閱覽空間，最適合想一個人沉浸在書裡的你。',
+      tip: '找個靠窗的位置，一待就是一下午。',
+      map: '政治大學 中正圖書館'
+    }
+  },
+  C: {
+    name: '熱血舞台王', emoji: '🎤', num: 'XIX', title: 'THE SUN', zh: '太陽', kw: '活力・自信・光芒',
+    desc: '你是人群中的發光體，有你在的地方就有笑聲。你喜歡熱鬧，也喜歡站上舞台被大家看見。',
+    place: {
+      name: '四維堂', area: '山下校區',
+      why: '政大歷史悠久的集會場地，迎新、表演、社團活動都在這裡上演——天生就是你的舞台。',
+      tip: '留意社團公演和校園活動，四維堂常常有好戲。',
+      map: '政治大學 四維堂'
+    }
+  },
+  D: {
+    name: '效率實踐家', emoji: '🎯', num: 'VII', title: 'THE CHARIOT', zh: '戰車', kw: '意志・目標・前進',
+    desc: '你目標明確、行動力強，喜歡把事情安排得井井有條。別人還在想，你已經做完了。',
+    place: {
+      name: '綜合院館', area: '山下校區',
+      why: '地下 2 層、地上 16 層，是政大規模最大的建築之一。高樓層、大格局，正好配得上你的企圖心。',
+      tip: '有空搭電梯到高樓層，俯瞰整個木柵。',
+      map: '政治大學 綜合院館'
+    }
+  },
+  E: {
+    name: '浪漫藝術家', emoji: '🎨', num: 'XVII', title: 'THE STAR', zh: '星星', kw: '靈感・希望・美感',
+    desc: '你對美有獨特的敏銳度，容易被一首歌、一道光影打動。你的世界需要美感和氛圍。',
+    place: {
+      name: '藝文中心', area: '山上校區',
+      why: '展覽、表演與藝文活動的據點，在這裡你可以盡情被美的事物包圍。',
+      tip: '出發前看看近期有什麼展覽或演出。',
+      map: '政治大學 藝文中心'
+    }
+  },
+  F: {
+    name: '自在漫遊者', emoji: '🍃', num: 'X', title: 'WHEEL OF FORTUNE', zh: '命運之輪', kw: '隨緣・自由・轉變',
+    desc: '你隨性自在，不喜歡被行程綁住。比起目的地，你更在乎沿途的風景和當下的心情。',
+    place: {
+      name: '醉夢溪畔步道', area: '校園內・沿醉夢溪',
+      why: '溪畔步道旁種滿楓香與野薑花，一路散步到河堤，就是最適合你的放空路線。',
+      tip: '傍晚去最舒服，運氣好還會遇到校園裡的小動物。',
+      map: '政治大學 醉夢溪'
+    }
+  },
+  G: {
+    name: '創意表達家', emoji: '🎬', num: 'I', title: 'THE MAGICIAN', zh: '魔術師', kw: '創造・表達・行動',
+    desc: '你腦中總有說不完的故事和點子，喜歡用影像、文字或聲音，把想法變成作品讓大家看見。',
+    place: {
+      name: '傳播學院大樓', area: '政大校園',
+      why: '樓裡有傳院劇場、傳院圖書館，地下室還有政大之聲電台和電視攝影棚，是把點子變成作品的最佳基地。',
+      tip: '有機會可以去看看傳院劇場的演出。',
+      map: '政治大學 傳播學院'
+    }
+  },
+  H: {
+    name: '暖心夥伴', emoji: '🤝', num: 'III', title: 'THE EMPRESS', zh: '皇后', kw: '溫暖・照顧・連結',
+    desc: '你是朋友圈裡最溫暖的存在，總是記得每個人的需要。只要有你在，大家就有歸屬感。',
+    place: {
+      name: '安九', area: '政大',
+      why: '政大人都知道的安九，是讓人感到熟悉又自在的地方，就像你總能讓身邊的人有歸屬感。',
+      tip: '約上朋友一起去吧。',
+      map: '政治大學 安九'
+    }
+  },
+  I: {
+    name: '穩重領導者', emoji: '⚓', num: 'IV', title: 'THE EMPEROR', zh: '皇帝', kw: '穩定・責任・領導',
+    desc: '你沉穩可靠，總是默默把大家的事扛起來。你不一定最大聲，卻是大家最信任的人。',
+    place: {
+      name: '行政大樓', area: '山下校區',
+      why: '全校的行政中心，當年為了防淹水把底盤挑高，所以一進門就是二樓。默默撐起整個校園，就像你一樣。',
+      tip: '二樓大廳的陶壁〈傳承〉是拍照熱點，前方階梯廣場也常有社團表演。',
+      map: '政治大學 行政大樓'
+    }
+  },
+  J: {
+    name: '文青思想家', emoji: '📜', num: 'II', title: 'THE HIGH PRIESTESS', zh: '女祭司', kw: '直覺・思考・深度',
+    desc: '你喜歡思考、熱愛文字，總能從平凡的小事裡看出深意。和你聊天，常常會聊到忘記時間。',
+    place: {
+      name: '百年樓', area: '山上校區',
+      why: '1983 年啟用的文學院館，名稱紀念政大在臺復校首任校長陳大齊，中文系、哲學系都在這裡。',
+      tip: '走一趟山上校區，感受一下文學院的氛圍。',
+      map: '政治大學 百年樓'
+    }
+  }
+};
+
+const BUILDING_QUESTIONS = [
+  { q: '週末早上醒來，你第一個想做的事是？', options: [
+    { t: '查查最近有什麼展覽可以看', s: { E: 2, A: 1 } },
+    { t: '泡杯咖啡，把沒看完的書看完', s: { B: 2, J: 1 } },
+    { t: '傳訊息揪朋友：「今天要不要出門？」', s: { H: 2, C: 1 } },
+    { t: '先把這週的待辦清掉，才能安心玩', s: { D: 2, I: 1 } }
+  ]},
+  { q: '分組報告時，你通常是哪一種組員？', options: [
+    { t: '上台報告、負責帶氣氛的那個人', s: { C: 2, G: 1 } },
+    { t: '分配工作、掌握大方向的組長', s: { I: 2, D: 1 } },
+    { t: '剪影片、做動畫，讓報告更吸睛', s: { G: 2, C: 1 } },
+    { t: '關心每個組員、幫大家加油打氣', s: { H: 2, I: 1 } }
+  ]},
+  { q: '走在政大校園裡，最吸引你的是？', options: [
+    { t: '最新、最有設計感的建築和空間', s: { A: 2, E: 1 } },
+    { t: '沒什麼人的安靜角落', s: { B: 2, J: 1 } },
+    { t: '溪邊的風、樹影，還有路過的小動物', s: { F: 2, E: 1 } },
+    { t: '熱鬧的社團攤位和街頭表演', s: { C: 2, H: 1 } }
+  ]},
+  { q: '你心中理想的晚餐是？', options: [
+    { t: '從來沒吃過的異國料理', s: { A: 2, G: 1 } },
+    { t: '一群人圍著火鍋吵吵鬧鬧', s: { C: 2, H: 1 } },
+    { t: '有氣氛、有夜景的地方', s: { E: 2, B: 1 } },
+    { t: '不用想太多，走到哪吃到哪', s: { F: 2, H: 1 } }
+  ]},
+  { q: '期中考週，你的狀態最像？', options: [
+    { t: '早就排好讀書計畫，照表操課', s: { D: 2, B: 1 } },
+    { t: '窩在圖書館一路讀到閉館', s: { B: 2, D: 1 } },
+    { t: '讀累了就去河堤散步放空', s: { F: 2, E: 1 } },
+    { t: '開讀書會，順便幫同學整理重點', s: { I: 2, H: 1 } }
+  ]},
+  { q: '選一個你最有共鳴的詞：', options: [
+    { t: '好奇', s: { A: 2, G: 1 } },
+    { t: '溫暖', s: { H: 2, F: 1 } },
+    { t: '浪漫', s: { E: 2, J: 1 } },
+    { t: '自在', s: { F: 2, B: 1 } }
+  ]},
+  { q: '朋友來找你訴苦，你會怎麼做？', options: [
+    { t: '冷靜幫他分析，陪他一起想解決辦法', s: { I: 2, D: 1 } },
+    { t: '安靜陪在他身邊，聽他說完', s: { H: 2, B: 1 } },
+    { t: '「走！我帶你去吃好吃的！」', s: { C: 2, F: 1 } },
+    { t: '跟他聊聊人生，一起想想這件事的意義', s: { J: 2, H: 1 } }
+  ]},
+  { q: '如果可以擁有一個超能力，你選？', options: [
+    { t: '瞬間移動，想去哪就去哪', s: { A: 2, F: 1 } },
+    { t: '時間暫停，讓我把事情全部做完', s: { D: 2, I: 1 } },
+    { t: '把腦中的畫面直接變成作品', s: { G: 2, E: 1 } },
+    { t: '讀懂世界上所有的書', s: { B: 2, J: 1 } }
+  ]},
+  { q: '社群媒體上的你比較像？', options: [
+    { t: '天天發限動，記錄生活大小事', s: { G: 2, C: 1 } },
+    { t: '幾乎不發文，默默按讚', s: { B: 2, F: 1 } },
+    { t: '每張照片都要調色、排版，一定要好看', s: { E: 2, C: 1 } },
+    { t: '會寫長文，分享想法和讀書心得', s: { J: 2, D: 1 } }
+  ]},
+  { q: '參加社團，你最可能是？', options: [
+    { t: '熱舞社、熱音社，要站上舞台', s: { C: 2, G: 1 } },
+    { t: '社長或幹部，負責帶大家往前走', s: { I: 2, D: 1 } },
+    { t: '影音社、校刊社，負責說故事', s: { G: 2, J: 1 } },
+    { t: '服務性社團，照顧需要幫忙的人', s: { H: 2, I: 1 } }
+  ]},
+  { q: '突然多出一個沒課的下午，你會？', options: [
+    { t: '找一間沒去過的店探險', s: { A: 2, J: 1 } },
+    { t: '去看展、聽一場音樂會', s: { E: 2, J: 1 } },
+    { t: '隨便走走，走到哪算哪', s: { F: 2, A: 1 } },
+    { t: '去書店翻翻文學、哲學書', s: { J: 2, B: 1 } }
+  ]},
+  { q: '朋友最常怎麼形容你？', options: [
+    { t: '「很可靠，交給你就放心」', s: { I: 2, D: 1 } },
+    { t: '「超有效率，做事好快」', s: { D: 2, I: 1 } },
+    { t: '「好有想法，常常冒出新點子」', s: { G: 2, A: 1 } },
+    { t: '「講話很有深度」', s: { J: 2, E: 1 } }
+  ]}
+];
+
+/* ---------- 🍜 美食之牌 ---------- */
+const FOOD_TYPES = {
+  W: {
+    name: '異國探險家', emoji: '🌏', num: 'XXI', title: 'THE WORLD', zh: '世界', kw: '探索・多元・嘗鮮',
+    desc: '你的味蕾想環遊世界，越少見的料理越吸引你。對你來說，每一餐都是一次小旅行。',
+    place: {
+      name: '滇味廚房', area: '政大商圈',
+      why: '政大商圈的滇緬料理老字號，酸、辣、香料一次到位，帶你的味蕾出國一趟。',
+      tip: '用餐時段常常客滿，建議錯開尖峰時間。',
+      map: '滇味廚房 政大'
+    }
+  },
+  S: {
+    name: '嗜辣勇者', emoji: '🌶️', num: 'VIII', title: 'STRENGTH', zh: '力量', kw: '勇氣・熱情・挑戰',
+    desc: '你喜歡刺激，越辣越過癮。吃辣對你來說不是折磨，而是證明自己的熱血儀式。',
+    place: {
+      name: '高句麗', area: '政大周邊',
+      why: '一盤香辣的辣炒年糕，紅通通、辣得夠勁，正好讓你挑戰極限。',
+      tip: '吃辣也要量力而為，記得點杯飲料備用。',
+      map: '高句麗 政大'
+    }
+  },
+  J: {
+    name: '小資精算師', emoji: '🪙', num: 'XI', title: 'JUSTICE', zh: '正義', kw: '平衡・精打細算・聰明',
+    desc: '你精打細算，深信 CP 值就是正義。用最划算的價格吃到最滿足的一餐，是你的生活智慧。',
+    place: {
+      name: '小曼谷', area: '政大周邊',
+      why: '有學生套餐的泰式料理，酸辣下飯、價格親民，完全符合你的精算標準。',
+      tip: '招牌打拋豬必點。',
+      map: '小曼谷 政大'
+    }
+  },
+  P: {
+    name: '火鍋號召者', emoji: '🍲', num: 'XX', title: 'JUDGEMENT', zh: '審判', kw: '號召・熱鬧・團聚',
+    desc: '你是揪團的號角，一聲令下大家就集合。對你來說，吃什麼不重要，跟誰吃才重要。',
+    place: {
+      name: '小尚品火鍋', area: '達賢圖書館樓下',
+      why: '一群人圍著火鍋邊煮邊聊，蔬菜還能無限享用，最適合你號召大家來一場聚會。',
+      tip: '聽說憑政大學生證有送肉優惠，出發前可以先確認。',
+      map: '小尚品火鍋 政大'
+    }
+  },
+  T: {
+    name: '分享家常派', emoji: '🥢', num: 'XIV', title: 'TEMPERANCE', zh: '節制', kw: '調和・分享・溫馨',
+    desc: '你喜歡點一桌菜和大家分著吃，讓每個人都吃得開心。你是餐桌上最懂得照顧氣氛的人。',
+    place: {
+      name: '阿里郎韓國小吃', area: '政大周邊',
+      why: '份量夠、適合一群人聚餐，點一桌菜大家分著吃，最有家的感覺。',
+      tip: '學長姐推薦蝦仁豆腐和糖醋肉。',
+      map: '阿里郎韓國小吃 政大'
+    }
+  },
+  V: {
+    name: '大胃能量王', emoji: '🍔', num: 'XV', title: 'THE DEVIL', zh: '惡魔', kw: '享受・滿足・不設限',
+    desc: '你無法抗拒美食的誘惑，份量越大越幸福。人生苦短，先吃飽再說！',
+    place: {
+      name: 'Juicy Bun Burger 就是棒美式餐廳', area: '萬壽路 19 號 1 樓',
+      why: '份量十足的漢堡和早午餐，內用飲料無限暢飲，最能餵飽你這顆貪吃的靈魂。',
+      tip: '尖峰時段常客滿；據說只收現金，記得帶現金。',
+      map: 'Juicy Bun Burger 政大店'
+    }
+  },
+  C: {
+    name: '咖啡館隱士', emoji: '☕', num: 'XII', title: 'THE HANGED MAN', zh: '倒吊人', kw: '慢活・沉澱・換個角度',
+    desc: '你喜歡放慢腳步，一杯咖啡、一本書就能過一下午。在安靜的角落，你總能找到新的想法。',
+    place: {
+      name: '小廢墟咖啡 Ruins Coffee Roasters', area: '距離政大一小段路',
+      why: '由老舊建築改造的咖啡廳，空間有故事感，適合帶本書或筆電，安靜地待上一整個下午。',
+      tip: '離校園有點距離，適合週末專程散步過去。',
+      map: 'Ruins Coffee Roasters 小廢墟咖啡'
+    }
+  },
+  L: {
+    name: '夜景浪漫派', emoji: '🌙', num: 'VI', title: 'THE LOVERS', zh: '戀人', kw: '浪漫・氛圍・心動',
+    desc: '對你來說，好吃之外更要有氣氛。燈光、景色、對的人，一餐飯就能變成難忘的回憶。',
+    place: {
+      name: '邀月茶坊', area: '貓空・指南路三段 40 巷 6 號',
+      why: '坐在山間喝茶、看台北夜景，氛圍感滿分，約會或和好友談心都很適合。',
+      tip: '搭貓空纜車上山更有感覺；晚上山上偏涼，記得帶件外套。',
+      map: '邀月茶坊 指南路三段40巷6號'
+    }
+  },
+  M: {
+    name: '暖胃療癒系', emoji: '🍜', num: 'XVIII', title: 'THE MOON', zh: '月亮', kw: '療癒・安心・溫柔',
+    desc: '累了一整天，你最需要的是一碗熱湯。你相信食物能安撫心情，簡單卻最療癒。',
+    place: {
+      name: '余師傅海鮮麵', area: '政大周邊',
+      why: '一碗熱騰騰的海鮮麵，不花俏，卻能把一整天的疲憊都暖回來。',
+      tip: '天氣冷或心情低落的時候，來一碗就對了。',
+      map: '余師傅海鮮麵 政大'
+    }
+  },
+  H: {
+    name: '老地方忠誠派', emoji: '🏮', num: 'V', title: 'THE HIEROPHANT', zh: '教皇', kw: '傳統・忠誠・安心',
+    desc: '你有自己的口袋名單，一旦愛上就會一直回去。熟悉的味道，就是你最大的安全感。',
+    place: {
+      name: '喜記', area: '政大周邊',
+      why: '政大人的日常好味道，吃過一次就會變成你的「老地方」。',
+      tip: '找到喜歡的那道菜，就把它變成你的固定菜單吧。',
+      map: '喜記 政大'
+    }
+  }
+};
+
+const FOOD_QUESTIONS = [
+  { q: '肚子餓的時候，你第一個念頭是？', options: [
+    { t: '想吃點沒吃過的新口味', s: { W: 2, S: 1 } },
+    { t: '越辣越好，要吃到冒汗', s: { S: 2, W: 1 } },
+    { t: '先看看哪一家最划算', s: { J: 2, H: 1 } },
+    { t: '吃平常那家就好，不會踩雷', s: { H: 2, M: 1 } }
+  ]},
+  { q: '你最常和誰一起吃飯？', options: [
+    { t: '一大群朋友，越多越熱鬧', s: { P: 2, T: 1 } },
+    { t: '三五好友，點一桌一起分', s: { T: 2, P: 1 } },
+    { t: '自己一個人，最自在', s: { C: 2, M: 1 } },
+    { t: '喜歡的人或曖昧對象', s: { L: 2, C: 1 } }
+  ]},
+  { q: '你最喜歡的用餐時段是？', options: [
+    { t: '早午餐，睡飽再吃一頓大的', s: { V: 2, C: 1 } },
+    { t: '下午茶，配咖啡慢慢坐', s: { C: 2, L: 1 } },
+    { t: '晚上，越晚氣氛越好', s: { L: 2, P: 1 } },
+    { t: '三餐準時吃，規律最重要', s: { H: 2, M: 1 } }
+  ]},
+  { q: '一餐的預算，你通常抓多少？', options: [
+    { t: '100 元有找，能省則省', s: { J: 2, H: 1 } },
+    { t: '200～300 元，吃得飽最重要', s: { V: 2, J: 1 } },
+    { t: '多花一點沒關係，要有氣氛', s: { L: 2, C: 1 } },
+    { t: '看大家怎麼分，一起平分最開心', s: { P: 2, T: 1 } }
+  ]},
+  { q: '下雨的冷天，你最想吃？', options: [
+    { t: '一碗熱騰騰的湯麵', s: { M: 2, H: 1 } },
+    { t: '火鍋！一定要火鍋！', s: { P: 2, V: 1 } },
+    { t: '辣到流汗的料理來暖身', s: { S: 2, P: 1 } },
+    { t: '窩在咖啡廳喝杯熱飲', s: { C: 2, L: 1 } }
+  ]},
+  { q: '點菜的時候，你通常是？', options: [
+    { t: '幫大家點一桌，大家分著吃', s: { T: 2, P: 1 } },
+    { t: '一定點最大份的套餐', s: { V: 2, S: 1 } },
+    { t: '挑菜單上最特別的那一道', s: { W: 2, L: 1 } },
+    { t: '永遠點同一道，吃不膩', s: { H: 2, M: 1 } }
+  ]},
+  { q: '你的美食座右銘是？', options: [
+    { t: '「人生苦短，先吃再說」', s: { V: 2, P: 1 } },
+    { t: '「吃飯就是要配好風景」', s: { L: 2, W: 1 } },
+    { t: '「CP 值就是正義」', s: { J: 2, V: 1 } },
+    { t: '「好的食物會療癒人心」', s: { M: 2, H: 1 } }
+  ]},
+  { q: '朋友說「這家超辣喔」，你會？', options: [
+    { t: '好啊！來挑戰！', s: { S: 2, V: 1 } },
+    { t: '先試一口看看再說', s: { W: 2, J: 1 } },
+    { t: '幫大家加點一份不辣的一起吃', s: { T: 2, M: 1 } },
+    { t: '那我還是點我平常吃的', s: { H: 2, C: 1 } }
+  ]},
+  { q: '你最常拍的美食照是？', options: [
+    { t: '一整桌滿滿的菜', s: { T: 2, P: 1 } },
+    { t: '咖啡拉花和窗邊的光影', s: { C: 2, L: 1 } },
+    { t: '爆料的大漢堡切面', s: { V: 2, W: 1 } },
+    { t: '不拍，趁熱吃最重要', s: { M: 2, S: 1 } }
+  ]},
+  { q: '期末考完，你會怎麼慶祝？', options: [
+    { t: '揪全班去吃火鍋', s: { P: 2, T: 1 } },
+    { t: '上山喝茶、看夜景', s: { L: 2, M: 1 } },
+    { t: '去吃一家早就想試的異國料理', s: { W: 2, S: 1 } },
+    { t: '回到最熟悉的那家店，點老樣子', s: { H: 2, T: 1 } }
+  ]},
+  { q: '吃完飯之後，你通常會？', options: [
+    { t: '精算每個人要付多少', s: { J: 2, T: 1 } },
+    { t: '繼續坐著聊天，聊到店家打烊', s: { T: 2, L: 1 } },
+    { t: '打開筆電，順便讀書、工作', s: { C: 2, J: 1 } },
+    { t: '再找一家續攤', s: { S: 2, V: 1 } }
+  ]},
+  { q: '選一個你最愛的味道：', options: [
+    { t: '香料', s: { W: 2, S: 1 } },
+    { t: '麻辣', s: { S: 2, P: 1 } },
+    { t: '酸甜', s: { J: 2, W: 1 } },
+    { t: '鮮甜的海鮮湯頭', s: { M: 2, H: 1 } }
+  ]}
+];
+
+const DECKS = {
+  building: {
+    name: '建築之牌', icon: '🏛️', types: BUILDING_TYPES, questions: BUILDING_QUESTIONS,
+    label: '🏛️ 命運指引你前往', shareLabel: '命定之地'
+  },
+  food: {
+    name: '美食之牌', icon: '🍜', types: FOOD_TYPES, questions: FOOD_QUESTIONS,
+    label: '🍜 命運為你準備的味道', shareLabel: '命定美食'
+  }
+};
+
+const ROMAN = ['I', 'II', 'III', 'IV', 'V', 'VI', 'VII', 'VIII', 'IX', 'X', 'XI', 'XII', 'XIII', 'XIV', 'XV'];
+const FAN_COUNT = 7;
+
+/* ============ 狀態 ============ */
+let mode = null;
+let current = 0;
+let answers = [];
+let lastResult = null;
+let locked = false;
+let picked = false;
+
+const $ = id => document.getElementById(id);
+const deck = () => DECKS[mode];
+const STAGES = ['home', 'quiz', 'oracle', 'draw', 'reveal'];
+function show(id) {
+  STAGES.forEach(s => $(s).classList.toggle('hidden', s !== id));
+  window.scrollTo({ top: 0 });
+}
+
+/* ============ 星空背景 ============ */
+(function makeSky() {
+  const sky = $('sky');
+  const n = window.innerWidth < 600 ? 60 : 110;
+  for (let i = 0; i < n; i++) {
+    const s = document.createElement('i');
+    const size = Math.random() < .85 ? 1 + Math.random() : 2 + Math.random();
+    s.className = 'star';
+    s.style.cssText = `left:${Math.random() * 100}%;top:${Math.random() * 100}%;width:${size}px;height:${size}px;` +
+      `--d:${2 + Math.random() * 4}s;--delay:${-Math.random() * 6}s`;
+    sky.appendChild(s);
+  }
+})();
+
+/* ============ 首頁：選牌組 ============ */
+function setMode(m) {
+  mode = m;
+  document.querySelectorAll('.mode').forEach(b => {
+    b.classList.toggle('selected', b.dataset.mode === m);
+    b.setAttribute('aria-pressed', b.dataset.mode === m);
+  });
+  $('modes').classList.add('has-choice');
+  $('startBtn').disabled = false;
+}
+document.querySelectorAll('.mode').forEach(btn => btn.addEventListener('click', () => setMode(btn.dataset.mode)));
+
+function startQuiz() {
+  current = 0;
+  answers = [];
+  show('quiz');
+  renderQuestion();
+}
+$('startBtn').addEventListener('click', startQuiz);
+
+/* ============ 測驗 ============ */
+function renderQuestion() {
+  const qs = deck().questions;
+  const item = qs[current];
+  $('counter').textContent = `${ROMAN[current]} / ${ROMAN[qs.length - 1]}`;
+  $('qLabel').textContent = `${deck().icon} ${deck().name}・QUESTION ${ROMAN[current]}`;
+  $('backBtn').disabled = current === 0;
+  $('qTitle').textContent = item.q;
+
+  const stars = $('stars');
+  stars.innerHTML = '';
+  qs.forEach((_, i) => {
+    const d = document.createElement('span');
+    if (i < current) d.className = 'on';
+    else if (i === current) d.className = 'now';
+    stars.appendChild(d);
+  });
+
+  const box = $('options');
+  box.innerHTML = '';
+  item.options.forEach((opt, i) => {
+    const b = document.createElement('button');
+    b.type = 'button';
+    b.className = 'option' + (answers[current] === i ? ' chosen' : '');
+    b.innerHTML = `<span class="key">${'ABCD'[i]}</span><span></span>`;
+    b.lastChild.textContent = opt.t;
+    b.addEventListener('click', () => choose(i, b));
+    box.appendChild(b);
+  });
+
+  const q = $('qBox');
+  q.classList.remove('q-anim');
+  void q.offsetWidth;
+  q.classList.add('q-anim');
+}
+
+function choose(i, btn) {
+  if (locked) return;
+  locked = true;
+  answers[current] = i;
+  btn.classList.add('chosen');
+  setTimeout(() => {
+    locked = false;
+    if (current < deck().questions.length - 1) {
+      current++;
+      renderQuestion();
+    } else {
+      show('oracle');
+      setTimeout(showDraw, 1800);
+    }
+  }, 260);
+}
+
+$('backBtn').addEventListener('click', () => {
+  if (current > 0) { current--; renderQuestion(); }
+});
+
+document.addEventListener('keydown', e => {
+  if ($('quiz').classList.contains('hidden') || locked) return;
+  let idx = '1234'.indexOf(e.key);
+  if (idx < 0) idx = 'abcd'.indexOf(e.key.toLowerCase());
+  if (idx >= 0 && $('options').children[idx]) choose(idx, $('options').children[idx]);
+});
+
+/* ============ 計分 ============ */
+function score() {
+  const { types, questions } = deck();
+  const total = Object.fromEntries(Object.keys(types).map(k => [k, 0]));
+  const primaryCount = Object.fromEntries(Object.keys(types).map(k => [k, 0]));
+  answers.forEach((optIdx, qIdx) => {
+    const s = questions[qIdx].options[optIdx].s;
+    for (const k in s) total[k] += s[k];
+    primaryCount[Object.keys(s)[0]]++;
+  });
+  // 同分時：先比「被選為主要人格的次數」，再比最後一題的主要人格
+  const last = answers.length - 1;
+  const lastPrimary = Object.keys(questions[last].options[answers[last]].s)[0];
+  const ranked = Object.keys(total).sort((a, b) =>
+    (total[b] - total[a]) || (primaryCount[b] - primaryCount[a]) ||
+    ((b === lastPrimary) - (a === lastPrimary)) || a.localeCompare(b)
+  );
+  return { total, ranked };
+}
+
+/* ============ 抽牌 ============ */
+function showDraw() {
+  picked = false;
+  const fan = $('fan');
+  fan.classList.remove('done');
+  fan.innerHTML = '';
+  for (let i = 0; i < FAN_COUNT; i++) {
+    const b = document.createElement('button');
+    b.type = 'button';
+    b.className = 'fan-card';
+    b.setAttribute('aria-label', `第 ${i + 1} 張牌`);
+    b.innerHTML = '<div class="tarot"><div class="card-back"></div></div>';
+    b.addEventListener('click', () => pickCard(b));
+    fan.appendChild(b);
+  }
+  show('draw');
+  // 先疊成一疊，再展開成扇形
+  requestAnimationFrame(() => requestAnimationFrame(layoutFan));
+}
+
+function layoutFan() {
+  const fan = $('fan');
+  const cards = [...fan.children];
+  if (!cards.length) return;
+  const fw = cards[0].offsetWidth;
+  const avail = fan.offsetWidth;
+  const mid = (cards.length - 1) / 2;
+  // 依可用寬度調整角度與間距，確保最外側的牌（含旋轉後的牌角）不超出畫面
+  const angle = avail < 500 ? 5 : 7;
+  const edge = fw / 2 + (fw * 12 / 7) * Math.sin(mid * angle * Math.PI / 180) + 8;
+  const step = Math.max(8, Math.min(fw * .62, (avail / 2 - edge) / mid));
+  cards.forEach((c, i) => {
+    const o = i - mid;
+    c.style.transitionDelay = picked ? '0s' : `${i * 70}ms`;
+    c.style.transform = `translateX(${o * step}px) translateY(${Math.abs(o) * fw * .07}px) rotate(${o * angle}deg)`;
+  });
+}
+window.addEventListener('resize', () => { if (!$('draw').classList.contains('hidden')) layoutFan(); });
+
+function pickCard(card) {
+  if (picked) return;
+  picked = true;
+  $('fan').classList.add('done');
+  [...$('fan').children].forEach(c => {
+    c.style.transitionDelay = '0s';
+    c.classList.add(c === card ? 'picked' : 'away');
+  });
+  setTimeout(showReveal, 900);
+}
+
+/* ============ 揭牌 ============ */
+function showReveal() {
+  lastResult = score();
+  const t = deck().types[lastResult.ranked[0]];
+
+  $('cfNum').textContent = t.num;
+  $('cfArt').textContent = t.emoji;
+  $('cfTitle').textContent = t.title;
+  $('cfZh').textContent = t.zh;
+  $('cfType').textContent = t.name;
+  $('kw').textContent = `正位關鍵字｜${t.kw}`;
+
+  renderReading();
+
+  const flip = $('flip');
+  flip.classList.remove('flipped', 'glow');
+  $('reading').classList.remove('show');
+  show('reveal');
+  setTimeout(() => flip.classList.add('flipped'), 500);
+  setTimeout(() => flip.classList.add('glow'), 1600);
+  setTimeout(() => {
+    $('reading').classList.add('show');
+    animateBars();
+  }, 1500);
+}
+
+function renderReading() {
+  const { total, ranked } = lastResult;
+  const { types, label } = deck();
+  const t = types[ranked[0]], s = types[ranked[1]];
+  const pick = t.place;
+
+  $('rType').textContent = `${t.zh}・${t.name}`;
+  $('rDesc').textContent = t.desc;
+
+  $('oLabel').textContent = label;
+  $('oName').textContent = pick.name;
+  $('oArea').textContent = '📌 ' + pick.area;
+  $('oWhy').textContent = pick.why;
+  $('oTip').textContent = '💡 ' + pick.tip;
+  $('oMap').href = 'https://www.google.com/maps/search/?api=1&query=' + encodeURIComponent(pick.map);
+
+  const sec = $('secret');
+  sec.innerHTML = '<span class="s-label">隱藏之牌</span>';
+  sec.append(
+    Object.assign(document.createElement('b'), { textContent: `${s.num} ${s.title}・${s.name}` }),
+    `　你的靈魂深處也藏著這張牌，不妨也去「${s.place.name}」看看。`
+  );
+
+  const sum = Object.values(total).reduce((a, b) => a + b, 0);
+  const bars = $('bars');
+  bars.innerHTML = '';
+  ranked.forEach((k, i) => {
+    const pct = Math.round((total[k] / sum) * 100);
+    const row = document.createElement('div');
+    row.className = 'bar-row' + (i === 0 ? ' top' : '');
+    row.dataset.pct = pct;
+    row.innerHTML = `<span></span><div class="bar"><div></div></div><span class="pct">${pct}%</span>`;
+    row.firstChild.textContent = `${types[k].emoji} ${types[k].name}`;
+    bars.appendChild(row);
+  });
+
+  const other = mode === 'building' ? 'food' : 'building';
+  $('switchBtn').textContent = `再抽${DECKS[other].name} ${DECKS[other].icon}`;
+}
+
+function animateBars() {
+  requestAnimationFrame(() => requestAnimationFrame(() => {
+    document.querySelectorAll('#bars .bar-row').forEach(r => {
+      r.querySelector('.bar > div').style.width = r.dataset.pct + '%';
+    });
+  }));
+}
+
+// 兩種牌組題目不同，切換時直接開始另一副牌的測驗
+$('switchBtn').addEventListener('click', () => {
+  setMode(mode === 'building' ? 'food' : 'building');
+  startQuiz();
+});
+
+$('retryBtn').addEventListener('click', () => show('home'));
+
+$('shareBtn').addEventListener('click', async () => {
+  const t = deck().types[lastResult.ranked[0]];
+  const text = `🔮 我在「政大靈魂塔羅」抽到了${deck().name}：${t.num} ${t.title}（${t.zh}）・${t.name}！\n` +
+               `${deck().shareLabel}：${t.place.name}\n` +
+               `來抽抽看你的政大命運之牌 👉 ${location.href}`;
+  try {
+    await navigator.clipboard.writeText(text);
+    toast('已複製結果，貼給朋友吧！');
+  } catch {
+    toast('複製失敗，請直接截圖分享 🙏');
+  }
+});
+
+function toast(msg) {
+  const t = $('toast');
+  t.textContent = msg;
+  t.classList.add('show');
+  clearTimeout(toast.timer);
+  toast.timer = setTimeout(() => t.classList.remove('show'), 2000);
+}
+</script>
+</body>
+</html>
