@@ -44,7 +44,19 @@
   }
   button { font-family: inherit; touch-action: manipulation; }
 
-  /* ---------- 星空 ---------- */
+  /* ---------- 宇宙背景（WebGL）---------- */
+  #cosmos { position: fixed; inset: 0; width: 100%; height: 100%; display: block; z-index: 0; pointer-events: none; }
+  html:not(.has-cosmos) #cosmos { display: none; }
+  .has-cosmos #sky { display: none; }
+  @media (max-width: 700px) {
+    /* 手機上關掉毛玻璃，避免每一格都重算模糊，改用較不透明的底色維持可讀性 */
+    .has-cosmos .panel {
+      -webkit-backdrop-filter: none; backdrop-filter: none;
+      background: linear-gradient(180deg, rgba(36, 24, 72, .86), rgba(16, 10, 38, .92));
+    }
+  }
+
+  /* ---------- 星空（WebGL 不支援時的備案）---------- */
   #sky { position: fixed; inset: 0; pointer-events: none; z-index: 0; overflow: hidden; }
   .star {
     position: absolute; border-radius: 50%; background: #fff;
@@ -363,6 +375,7 @@
 </style>
 </head>
 <body>
+<canvas id="cosmos" aria-hidden="true"></canvas>
 <div id="sky" aria-hidden="true"></div>
 
 <main class="app" id="app">
@@ -482,6 +495,345 @@
 
 </main>
 <div id="toast" class="toast" role="status"></div>
+
+<script>
+/* ================================================================
+   宇宙背景：WebGL 體積星雲＋3D 星空＋漂浮鏡頭
+   - 星雲：以 3D 雜訊做 ray marching（體積渲染）
+   - 近景星星：3D 網格（DDA 走訪），鏡頭移動時有真實視差
+   - 遠景星星與銀河帶：依視線方向產生
+   - 會依裝置效能自動調整解析度與取樣步數；不支援 WebGL 時退回 CSS 星空
+   ================================================================ */
+window.Cosmos = (function () {
+  const canvas = document.getElementById('cosmos');
+  const api = { warp() {}, pulse() {} };
+  if (!canvas) return api;
+  const gl = canvas.getContext('webgl', { antialias: false, alpha: false, depth: false, powerPreference: 'high-performance' });
+  if (!gl) return api;
+
+  const VERT = 'attribute vec2 aPos; void main() { gl_Position = vec4(aPos, 0.0, 1.0); }';
+  const FRAG = `
+#ifdef GL_FRAGMENT_PRECISION_HIGH
+precision highp float;
+#else
+precision mediump float;
+#endif
+uniform vec2 uRes;
+uniform float uTime;
+uniform vec3 uCamPos, uFwd, uRight, uUp;
+uniform float uSteps, uOct, uPulse;
+uniform sampler2D uNoise;
+
+const vec3 VIOLET  = vec3(0.42, 0.20, 0.95);
+const vec3 MAGENTA = vec3(0.95, 0.25, 0.62);
+const vec3 TEAL    = vec3(0.12, 0.62, 0.85);
+const vec3 GOLD    = vec3(1.00, 0.72, 0.38);
+
+// 以 2D 雜訊貼圖做 3D value noise（一次取樣，比純運算快很多）
+float noise(vec3 x) {
+  vec3 p = floor(x);
+  vec3 f = fract(x);
+  f = f * f * (3.0 - 2.0 * f);
+  vec2 uv = mod(p.xy + vec2(37.0, 17.0) * p.z, 256.0) + f.xy;
+  vec2 rg = texture2D(uNoise, (uv + 0.5) / 256.0).yx;
+  return mix(rg.x, rg.y, f.z);
+}
+
+float fbm(vec3 p) {
+  float s = 0.0, a = 0.5;
+  for (int i = 0; i < 5; i++) {
+    if (float(i) >= uOct) break;
+    s += a * noise(p);
+    p = p * 2.02 + vec3(3.1, 1.7, 5.3);
+    a *= 0.5;
+  }
+  return s / (1.0 - 2.0 * a);
+}
+
+// Dave Hoskins 的 hash13：在整數格點上分布均勻，不會排成規律的格子
+float hash(vec3 p) {
+  p = fract(p * 0.1031);
+  p += dot(p, p.zyx + 31.32);
+  return fract((p.x + p.y) * p.z);
+}
+vec3 hash3(vec3 p) {
+  return vec3(hash(p), hash(p + vec3(7.13, 1.37, 3.71)), hash(p + vec3(2.91, 8.17, 5.53)));
+}
+
+// 遠景星星：依方向產生，三層不同密度
+vec3 farStars(vec3 rd, float pa, float band) {
+  vec3 col = vec3(0.0);
+  for (int l = 0; l < 3; l++) {
+    float fl = float(l);
+    float sc = 90.0 + fl * 70.0;
+    vec3 p = rd * sc;
+    vec3 c = floor(p);
+    vec3 f = fract(p) - 0.5;
+    float h = hash(c + fl * 13.7);
+    float thr = 0.935 - band * 0.04;
+    if (h > thr) {
+      vec3 o = (hash3(c + fl * 5.1) - 0.5) * 0.5;
+      float d = length(f - o);
+      float sz = max(pa * sc * 0.9, 0.035);
+      float b = exp(-d * d / (sz * sz)) * (h - thr) / (1.0 - thr);
+      float tw = 0.6 + 0.4 * sin(uTime * (0.6 + 2.0 * h) + h * 90.0);
+      vec3 tint = mix(vec3(0.75, 0.82, 1.0), vec3(1.0, 0.86, 0.66), hash(c + 3.3));
+      col += tint * b * tw * (1.3 - fl * 0.35);
+    }
+  }
+  return col;
+}
+
+// 近景星星：沿視線以 DDA 走訪 3D 網格，鏡頭移動時有視差
+vec3 nearStars(vec3 ro, vec3 rd, float pa) {
+  vec3 st = step(0.0, rd) * 2.0 - 1.0;
+  vec3 rdS = st * max(abs(rd), vec3(1e-4));
+  vec3 cell = floor(ro);
+  vec3 tDelta = abs(1.0 / rdS);
+  vec3 tMax = (cell + max(st, 0.0) - ro) / rdS;
+  vec3 col = vec3(0.0);
+  for (int i = 0; i < 28; i++) {
+    float h = hash(cell);
+    if (h > 0.86) {
+      vec3 sp = cell + 0.15 + 0.7 * hash3(cell + 0.5);
+      vec3 rel = sp - ro;
+      float t = dot(rel, rd);
+      if (t > 0.05) {
+        float a = length(rel - rd * t) / t;
+        float sz = max(pa * 1.1, 0.0009);
+        float fade = smoothstep(0.2, 1.2, t) * (1.0 - smoothstep(9.0, 13.0, t));
+        float br = (0.9 + 4.0 * (h - 0.86) / 0.14) / (1.0 + t * 0.3);
+        float core = exp(-a * a / (sz * sz));
+        float halo = (sz * sz * 0.6) / (a * a + sz * sz * 4.0);
+        float tw = 0.75 + 0.25 * sin(uTime * (1.0 + 3.0 * h) + h * 40.0);
+        vec3 tint = mix(vec3(0.7, 0.8, 1.0), vec3(1.0, 0.82, 0.6), hash(cell + 9.1));
+        float spike = 0.0;
+        if (h > 0.975) {
+          // 最亮的星星加上十字繞射光芒
+          vec2 s2 = vec2(dot(rel, uRight), dot(rel, uUp)) / t;
+          vec2 ad = abs(s2) / sz;
+          spike = (exp(-ad.y * 1.2) * exp(-ad.x * 0.035) + exp(-ad.x * 1.2) * exp(-ad.y * 0.035)) * 0.5;
+        }
+        col += tint * br * (core + halo + spike) * fade * tw;
+      }
+    }
+    if (tMax.x < tMax.y && tMax.x < tMax.z) { cell.x += st.x; tMax.x += tDelta.x; }
+    else if (tMax.y < tMax.z)               { cell.y += st.y; tMax.y += tDelta.y; }
+    else                                    { cell.z += st.z; tMax.z += tDelta.z; }
+  }
+  return col;
+}
+
+// 遠景星雲：多層 domain warping 產生雲氣、亮核與暗塵帶，集中在銀河帶附近
+vec4 skyNebula(vec3 rd, float band2) {
+  vec3 p = rd * 2.0;
+  vec3 q = vec3(fbm(p + vec3(0.0, 0.0, uTime * 0.003)),
+                fbm(p + vec3(5.2, 1.3, 2.8)),
+                fbm(p + vec3(9.7, 4.1, 7.3)));
+  float n = fbm(p * 1.7 + (q - 0.5) * 3.0);
+  n = clamp((n - 0.32) / 0.42, 0.0, 1.0);
+  float region = smoothstep(0.15, 0.85, band2 * 0.8 + (q.x - 0.5) * 1.2 + 0.25);
+  float cloud = pow(n, 2.2) * region;
+  float dust = smoothstep(0.48, 0.66, fbm(p * 4.3 + (q - 0.5) * 4.0)) * region;
+
+  vec3 c = mix(VIOLET, MAGENTA, smoothstep(0.35, 0.65, q.y));
+  c = mix(c, TEAL, smoothstep(0.55, 0.75, q.z) * 0.8);
+  vec3 col = c * cloud * 0.4;
+  col += mix(GOLD, vec3(1.0, 0.9, 0.95), 0.4) * pow(n, 6.0) * region * 0.38;
+  col *= 1.0 - dust * 0.85;
+  col *= 0.75 + 0.5 * fbm(p * 9.0 + q * 2.0);
+  float trans = 1.0 - clamp(dust * 0.9 + cloud * 0.3, 0.0, 0.95);
+  return vec4(col, trans);
+}
+
+void main() {
+  vec2 uv = (gl_FragCoord.xy - 0.5 * uRes) / uRes.y;
+  vec3 rd = normalize(uFwd * 1.5 + uv.x * uRight + uv.y * uUp);
+  float pa = 1.0 / (uRes.y * 1.5);
+  vec3 ro = uCamPos;
+
+  // 深空底色＋銀河帶
+  vec3 bn = normalize(vec3(0.35, 1.0, 0.25));
+  float bd = dot(rd, bn);
+  float band = exp(-bd * bd * 14.0);
+  float band2 = exp(-bd * bd * 3.0);
+  vec3 col = vec3(0.006, 0.004, 0.016);
+  vec4 neb = skyNebula(rd, band2);
+  col += vec3(0.20, 0.13, 0.32) * band * 0.08 * neb.a;
+  col += farStars(rd, pa, band) * neb.a;
+  col += neb.rgb;
+  col += nearStars(ro, rd, pa);
+
+  col *= 1.0 + uPulse * 0.8;
+  col = 1.0 - exp(-col * 1.9);
+  col = pow(col, vec3(1.12));
+  col *= mix(0.55, 1.0, smoothstep(1.25, 0.25, length(uv)));
+  // 抖色（interleaved gradient noise）避免暗部出現色階
+  col += (fract(52.9829189 * fract(dot(gl_FragCoord.xy, vec2(0.06711056, 0.00583715)))) - 0.5) / 255.0;
+  gl_FragColor = vec4(col, 1.0);
+}`;
+
+  function compile(type, src) {
+    const s = gl.createShader(type);
+    gl.shaderSource(s, src);
+    gl.compileShader(s);
+    if (!gl.getShaderParameter(s, gl.COMPILE_STATUS)) { console.warn(gl.getShaderInfoLog(s)); return null; }
+    return s;
+  }
+  const vs = compile(gl.VERTEX_SHADER, VERT), fs = compile(gl.FRAGMENT_SHADER, FRAG);
+  if (!vs || !fs) return api;
+  const prog = gl.createProgram();
+  gl.attachShader(prog, vs);
+  gl.attachShader(prog, fs);
+  gl.linkProgram(prog);
+  if (!gl.getProgramParameter(prog, gl.LINK_STATUS)) { console.warn(gl.getProgramInfoLog(prog)); return api; }
+  gl.useProgram(prog);
+
+  // 全螢幕三角形
+  const buf = gl.createBuffer();
+  gl.bindBuffer(gl.ARRAY_BUFFER, buf);
+  gl.bufferData(gl.ARRAY_BUFFER, new Float32Array([-1, -1, 3, -1, -1, 3]), gl.STATIC_DRAW);
+  const aPos = gl.getAttribLocation(prog, 'aPos');
+  gl.enableVertexAttribArray(aPos);
+  gl.vertexAttribPointer(aPos, 2, gl.FLOAT, false, 0, 0);
+
+  // 雜訊貼圖：G 通道 = A(u)，R 通道 = A(u + (37,17))，讓一次取樣就能內插 z 方向
+  const N = 256, base = new Uint8Array(N * N), tex = new Uint8Array(N * N * 4);
+  // 固定種子的亂數，讓每個人看到同一片星空
+  let seed = 20261019;
+  const rand = () => { seed = (seed + 0x6D2B79F5) | 0; let x = Math.imul(seed ^ (seed >>> 15), 1 | seed); x ^= x + Math.imul(x ^ (x >>> 7), 61 | x); return ((x ^ (x >>> 14)) >>> 0) / 4294967296; };
+  for (let i = 0; i < base.length; i++) base[i] = rand() * 256;
+  for (let y = 0; y < N; y++) for (let x = 0; x < N; x++) {
+    const i = (y * N + x) * 4;
+    tex[i] = base[((y + 17) & 255) * N + ((x + 37) & 255)];
+    tex[i + 1] = base[y * N + x];
+    tex[i + 3] = 255;
+  }
+  const t = gl.createTexture();
+  gl.bindTexture(gl.TEXTURE_2D, t);
+  gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, N, N, 0, gl.RGBA, gl.UNSIGNED_BYTE, tex);
+  gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR);
+  gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.LINEAR);
+  gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.REPEAT);
+  gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.REPEAT);
+
+  const U = {};
+  ['uRes', 'uTime', 'uCamPos', 'uFwd', 'uRight', 'uUp', 'uSteps', 'uOct', 'uPulse', 'uNoise']
+    .forEach(n => U[n] = gl.getUniformLocation(prog, n));
+  gl.uniform1i(U.uNoise, 0);
+
+  // 畫質等級：解析度倍率、星雲取樣步數、雜訊層數
+  const LEVELS = [
+    { scale: 1.0,  steps: 40, oct: 4 },
+    { scale: 0.8,  steps: 32, oct: 4 },
+    { scale: 0.65, steps: 26, oct: 3 },
+    { scale: 0.5,  steps: 20, oct: 3 },
+    { scale: 0.4,  steps: 16, oct: 3 },
+    { scale: 0.32, steps: 14, oct: 2 }
+  ];
+  const isSmall = Math.min(innerWidth, innerHeight) < 700 || matchMedia('(pointer: coarse)').matches;
+  let level = isSmall ? 3 : 1;
+  // 除錯用：網址加 ?q=0～5 可固定畫質（不自動調整）
+  const fixedQ = new URLSearchParams(location.search).get('q');
+  if (fixedQ !== null) level = Math.max(0, Math.min(LEVELS.length - 1, +fixedQ || 0));
+  const MAX_PIXELS = 1.1e6;
+
+  function resize() {
+    const dpr = Math.min(window.devicePixelRatio || 1, 1.5);
+    let w = innerWidth * dpr, h = innerHeight * dpr;
+    const k = Math.min(1, Math.sqrt(MAX_PIXELS / (w * h))) * LEVELS[level].scale;
+    w = Math.max(1, Math.round(w * k));
+    h = Math.max(1, Math.round(h * k));
+    if (canvas.width !== w || canvas.height !== h) { canvas.width = w; canvas.height = h; }
+    gl.viewport(0, 0, w, h);
+  }
+
+  // 鏡頭狀態
+  let travel = +(new URLSearchParams(location.search).get('z') || 0), speed = 0.22, targetSpeed = 0.22, pulse = 0;
+  const look = { x: 0, y: 0, tx: 0, ty: 0 };
+  if (matchMedia('(pointer: fine)').matches) {
+    addEventListener('pointermove', e => {
+      look.tx = e.clientX / innerWidth - 0.5;
+      look.ty = e.clientY / innerHeight - 0.5;
+    }, { passive: true });
+  }
+
+  const norm = v => { const l = Math.hypot(v[0], v[1], v[2]); return [v[0] / l, v[1] / l, v[2] / l]; };
+  const cross = (a, b) => [a[1] * b[2] - a[2] * b[1], a[2] * b[0] - a[0] * b[2], a[0] * b[1] - a[1] * b[0]];
+
+  function draw(time) {
+    const pos = [
+      Math.sin(travel * 0.05) * 2.5 + Math.sin(time * 0.13) * 0.15,
+      Math.cos(travel * 0.037) * 1.8 + Math.sin(time * 0.21) * 0.12,
+      travel
+    ];
+    const yaw = Math.sin(time * 0.031) * 0.35 + look.x * 0.25;
+    const pitch = Math.sin(time * 0.023) * 0.18 - look.y * 0.15;
+    const roll = Math.sin(time * 0.045) * 0.07;
+    const fwd = [Math.sin(yaw) * Math.cos(pitch), Math.sin(pitch), Math.cos(yaw) * Math.cos(pitch)];
+    const right = norm(cross([Math.sin(roll), Math.cos(roll), 0], fwd));
+    const up = cross(fwd, right);
+    const L = LEVELS[level];
+    gl.uniform2f(U.uRes, canvas.width, canvas.height);
+    gl.uniform1f(U.uTime, time);
+    gl.uniform3fv(U.uCamPos, pos);
+    gl.uniform3fv(U.uFwd, fwd);
+    gl.uniform3fv(U.uRight, right);
+    gl.uniform3fv(U.uUp, up);
+    gl.uniform1f(U.uSteps, L.steps);
+    gl.uniform1f(U.uOct, L.oct);
+    gl.uniform1f(U.uPulse, pulse);
+    gl.drawArrays(gl.TRIANGLES, 0, 3);
+  }
+
+  const reduced = matchMedia('(prefers-reduced-motion: reduce)').matches;
+  let last = 0, clock = 20, frames = 0, acc = 0, lastChange = 0, running = true;
+
+  function frame(now) {
+    if (!running) return;
+    const dt = Math.min(0.1, last ? (now - last) / 1000 : 0.016);
+    last = now;
+    clock += dt;
+    speed += (targetSpeed - speed) * Math.min(1, dt * 1.5);
+    travel += speed * dt;
+    pulse *= Math.exp(-dt * 1.4);
+    look.x += (look.tx - look.x) * Math.min(1, dt * 2);
+    look.y += (look.ty - look.y) * Math.min(1, dt * 2);
+    draw(clock);
+
+    // 自動調整畫質：太慢就降、很順就升
+    frames++; acc += dt;
+    if (frames >= 40 && fixedQ === null) {
+      const avg = acc / frames;
+      if (avg > 0.026 && level < LEVELS.length - 1) { level++; resize(); lastChange = now; }
+      else if (avg < 0.0135 && level > 0 && now - lastChange > 4000) { level--; resize(); lastChange = now; }
+      frames = 0; acc = 0;
+    }
+    requestAnimationFrame(frame);
+  }
+
+  resize();
+  addEventListener('resize', () => { resize(); if (reduced) draw(clock); });
+  canvas.addEventListener('webglcontextlost', e => {
+    e.preventDefault();
+    running = false;
+    document.documentElement.classList.remove('has-cosmos');
+  });
+  document.addEventListener('visibilitychange', () => {
+    if (reduced) return;
+    if (document.hidden) running = false;
+    else if (!running) { running = true; last = 0; requestAnimationFrame(frame); }
+  });
+
+  document.documentElement.classList.add('has-cosmos');
+  if (reduced) draw(clock);
+  else requestAnimationFrame(frame);
+
+  api.warp = on => { targetSpeed = on ? 3.2 : 0.22; };
+  api.pulse = () => { pulse = 1; };
+  return api;
+})();
+</script>
 
 <script>
 /* ================================================================
@@ -875,6 +1227,7 @@ const STAGES = ['home', 'quiz', 'oracle', 'draw', 'reveal'];
 function show(id) {
   STAGES.forEach(s => $(s).classList.toggle('hidden', s !== id));
   window.scrollTo({ top: 0 });
+  window.Cosmos.warp(id === 'oracle');   // 命運之輪轉動時，鏡頭加速穿越星海
 }
 
 /* ============ 星空背景 ============ */
@@ -1064,6 +1417,7 @@ function showReveal() {
   $('reading').classList.remove('show');
   show('reveal');
   setTimeout(() => flip.classList.add('flipped'), 500);
+  setTimeout(() => window.Cosmos.pulse(), 900);   // 翻牌時宇宙亮起
   setTimeout(() => flip.classList.add('glow'), 1600);
   setTimeout(() => {
     $('reading').classList.add('show');
