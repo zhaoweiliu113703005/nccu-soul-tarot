@@ -52,8 +52,14 @@
   }
   @keyframes twinkle { 0%, 100% { opacity: .15; } 50% { opacity: .9; } }
 
-  .app { position: relative; z-index: 1; width: 100%; max-width: 980px; margin: 0 auto; }
-  .stage { animation: appear .6s ease both; max-width: 640px; margin: 0 auto; }
+  /* 用 flex + margin:auto 讓每個畫面上下置中；內容比螢幕高時（如結果頁）會自然從頂端開始，不會被裁切 */
+  .app {
+    position: relative; z-index: 1; width: 100%; max-width: 980px; margin: 0 auto;
+    display: flex; flex-direction: column;
+    min-height: calc(100vh - 64px);
+    min-height: calc(100dvh - max(24px, env(safe-area-inset-top)) - max(40px, env(safe-area-inset-bottom)));
+  }
+  .stage { animation: appear .6s ease both; width: 100%; max-width: 640px; margin: auto; }
   .stage.wide { max-width: 960px; }
   @keyframes appear { from { opacity: 0; transform: translateY(14px); } to { opacity: 1; transform: none; } }
   .hidden { display: none !important; }
